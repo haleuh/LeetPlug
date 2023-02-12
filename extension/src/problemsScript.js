@@ -1,23 +1,21 @@
 console.log('Problems page intercepted');
 window.addEventListener("load", onLoadPage, false);
 
-// Configuration consts
-const problemDescriptionParent = "[data-key='description-content']";
-const problemDescriptionElement = "[class*='description__']";
-const problemDescriptionTabElement = "[data-key='description']";
-const submissionResultElement = "[class*='result__']";
-const submissionSuccessElement = "[class*='success__']";
-const submissionErrorElement = "[class*='error__']";
-const codeAreaElement = "[data-cy='code-area']";
-const codingPanelElement = "[class*='content__']";
-const runCodeButton = "[data-cy='run-code-btn']";
-const submitCodeButton = "[data-cy='submit-code-btn']";
-const resetCodeButton = "[class*='reset-code-btn__']";
-const resetCodeButtonWarn = "[class*='reset-code-btn-warn__']";
-const questionTitleElement = "[data-cy='question-title']";
-const difficultyEasyElement = "[diff='easy']";
-const difficultyMediumElement = "[diff='medium']";
-const difficultyHardElement = "[diff='hard']";
+// Configuration const
+const darkThemeElement = "[data-theme='dark']"
+const problemDescriptionTabElement = "[class='flex flex-row space-x-2 overflow-x-auto overflow-y-hidden']";  // Description tab header
+const problemDescriptionElement = "[class='flex h-full w-full flex-1 flex-col']";  // Description content
+const submissionResultElement = "div.flex.flex-col.gap-6.px-5.pt-6 > div > div.flex.items-center.gap-4 > div > span";  // Result element
+const codeAreaElement = "[class='h-full flex-col ssg__qd-splitter-secondary-w']";   // Code area
+const codingPanelElement = "[class='relative flex h-full flex-col']"; // Code content
+const bottomButtonElement = "[class='ml-auto flex items-center space-x-4']";  // Run button
+const submitCodeButton = ":button:contains('Submit')";  // Submit button
+const resetCodeButton = "div.overflow-hidden.ml-2.my-2 > div > div:nth-child(3) > button";
+const resetCodeButtonWarn = ":button:contains('Confirm')";
+const questionTitleElement = "[class='mt-3 flex space-x-4']";  // Question title
+const difficultyEasyElement = "[class*='bg-olive']";  // Difficulty
+const difficultyMediumElement = "[class*='bg-yellow']";
+const difficultyHardElement = "[class*='bg-pink']";
 
 const easyId = 1;
 const mediumId = 10;
@@ -35,7 +33,7 @@ const customControlButtons = `
 `
 
 // Styles definition
-var timerStyle = `
+var lightTimerStyle = `
 .timer_style {
     border-radius: 2px;
     border:1px solid #E8E8E8;
@@ -55,7 +53,7 @@ var timerStyle = `
 .text_style {
     margin: 10;
     text-align: center;
-    font-color: #FAFAFA;
+    font-color: #616161;
 }
 .round_style {
     margin: 10;
@@ -76,6 +74,49 @@ var timerStyle = `
     margin: auto;
 }
 `
+
+var darkTimerStyle = `
+.timer_style {
+    border-radius: 2px;
+    border:1px solid #bfbfbf;
+    background-color: #282828;
+    color: black;
+    font-weight: bold;
+    padding: 5px;
+    margin-right: 10px;
+}
+.title_style {
+    margin: 10;
+    text-align: center;
+    font-color: #FAFAFA;
+    font-weight: bold;
+    font-size: 150%;
+}
+.text_style {
+    margin: 10;
+    text-align: center;
+    font-color: #bfbfbf;
+}
+.round_style {
+    margin: 10;
+    text-align: center;
+    font-weight: bold;
+    border-radius: 2px;
+    border:1px solid #E8E8E8;
+    background: #282828;
+    padding: 20px; 
+    width: 100%;
+    height: auto;
+}
+.round_style:hover {
+    background: #1a1a1a;
+}
+
+#controlButtons {
+    margin: auto;
+}
+`
+
 // Globals
 var sec = 0;
 var userId = "";
@@ -224,7 +265,7 @@ function disableMask() {
 // Send the event related to the problem (start, submit) to the remote web service
 function sendProblemEvent(problem, event, session) {
     console.log('Info: ' + userId + " " + userKey);
-    if (userId == "" || userKey == "") return;
+    if (userId === "" || userKey === "") return;
 
     const req = new XMLHttpRequest();
     let url = new URL(webAppURL + '/events');
@@ -255,31 +296,28 @@ function getProblem(pageURL) {
 
 // Get the problem difficulty
 function getProblemDifficulty() {
-    if ($(questionTitleElement).parent().children().children(difficultyEasyElement).length)
+    if ($(questionTitleElement).children(difficultyEasyElement).length)
         return easyId;
-    if ($(questionTitleElement).parent().children().children(difficultyMediumElement).length)
+    if ($(questionTitleElement).children(difficultyMediumElement).length)
         return mediumId;
-    if ($(questionTitleElement).parent().children().children(difficultyHardElement).length)
+    if ($(questionTitleElement).children(difficultyHardElement).length)
         return hardId;
 }
 
-// This function can identify if the submit was completed and stop the polling cycle
+// This function can identify if the submission was completed and stop the polling cycle
 function checkForSubmitComplete () {
-    $(submissionSuccessElement).each(function( index ) {
-        if ($(this).parent('[class*=result__]').length) {
+    if ($(submissionResultElement).length) {
+        if ($(submissionResultElement).text() === "Accepted") {
             clearInterval(jsSubmissionChecktimer);
             console.log("SUCCESS");
             stopTimer();
             sendProblemEvent(currentProblem, "result_ok", session);
-        }
-    });
-    $(submissionErrorElement).each(function( index ) {
-        if ($(this).parent('[class*=result__]').length) {
+        } else {
             clearInterval(jsSubmissionChecktimer);
             console.log("ERROR");
             sendProblemEvent(currentProblem, "result_ko", session);
         }
-    });
+    }
 }
 
 var descriptionTrigger = true;
@@ -297,8 +335,8 @@ function prepareSession() {
 }
 
 function checkForMutations () {
-    if (currenDescriptionLink != "" &&
-        $(problemDescriptionTabElement).find('a').attr('href') != currenDescriptionLink) {
+    if (currenDescriptionLink !== "" &&
+        $(problemDescriptionTabElement).find('a').attr('href') !== currenDescriptionLink) {
         currenDescriptionLink = $(problemDescriptionTabElement).find('a').attr('href');
         console.log("NEW PROBLEM: " + currenDescriptionLink);
         clearInterval(jsSubmissionChecktimer);
@@ -317,42 +355,40 @@ function checkForMutations () {
             $(problemDescriptionElement).attr("style", "display: none;");
 
             if (!$('#controlButtons').length) {
-                // store the current Description URL, that will later used to understand if the
+                // store the current Description URL, that will later use to understand if the
                 // content is changed
                 currenDescriptionLink = $(problemDescriptionTabElement).find('a').attr('href');
 
                 $(customControlButtons).insertBefore($(problemDescriptionElement));
 
                 // set the callbacks on click on button
-                $("#showProblemWithStopwatchAndTrack").click(function(e) {
+                $("#showProblemWithStopwatchAndTrack").click(function() {
                     // if the coding panel is not clean
-                    if ($(resetCodeButton)[0] !== undefined) {
+                    if ($(resetCodeButtonWarn).length) {
                         // trigger the reset of the code
-                        $(resetCodeButton)[0].click();
-                    } else if ($(resetCodeButtonWarn)[1] !== undefined) {
-                        // trigger the reset of the code
-                        $(resetCodeButtonWarn)[1].click();
-                    } else {
+                        $(resetCodeButtonWarn).click();
                         prepareSession();
                         startTimer();
                         sendProblemEvent(currentProblem, "start", session);
+                    } else {
+                        // trigger the reset of the code
+                        $(resetCodeButton).click();
                     }
                 });
-                $("#showProblemNoStopwatchButTrack").click(function(e) {
+                $("#showProblemNoStopwatchButTrack").click(function() {
                     // if the coding panel is not clean
-                    if ($(resetCodeButton)[0] !== undefined) {
+                    if ($(resetCodeButtonWarn).length) {
                         // trigger the reset of the code
-                        $(resetCodeButton)[0].click();
-                    } else if ($(resetCodeButtonWarn)[1] !== undefined) {
-                        // trigger the reset of the code
-                        $(resetCodeButtonWarn)[1].click();
-                    } else {
+                        $(resetCodeButtonWarn).click();
                         prepareSession();
                         hideTimer();
                         sendProblemEvent(currentProblem, "start", session);
+                    } else {
+                        // trigger the reset of the code
+                        $(resetCodeButton).click();
                     }
                 });
-                $("#showProblemNoStopwatchNoTrack").click(function(e) {
+                $("#showProblemNoStopwatchNoTrack").click(function() {
                     prepareSession();
                     hideTimer();
                     sendProblemEvent(currentProblem, "start_no_track", session);
@@ -378,26 +414,32 @@ function checkForMutations () {
         }
 
         // add the timer near the submission buttons
-        $('<label id="timer" class="timer_style" style="display: none;">00 Hours 00 Minutes 00 Seconds</label>').insertBefore($(runCodeButton));
+        $('<label id="timer" class="timer_style" style="display: none;">00 Hours 00 Minutes 00 Seconds</label>').prependTo($(bottomButtonElement));
         if (timerVisible)
             showTimer();
 
-        $(submitCodeButton).click(function(e) {
+        $(submitCodeButton).click(function() {
             console.log("SUBMIT");
             clearInterval(jsSubmissionChecktimer);
             jsSubmissionChecktimer = setInterval(checkForSubmitComplete, 500);
         });
     }
-};
+}
+
+// Theme function
+function getThemeStyle() {
+    if ($(darkThemeElement).length)
+        return darkTimerStyle;
+    return lightTimerStyle;
+}
 
 // Main onLoadPage function, starts the cycles needed to discover the elements inside the page
 // and to attach listeners to them
 function onLoadPage (evt) {
     // insert the styles for the custom components
-    var styleSheet = document.createElement("style")
-    styleSheet.type = "text/css"
-    styleSheet.innerText = timerStyle
-    document.head.appendChild(styleSheet)
-
+    var styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = getThemeStyle();
+    document.head.appendChild(styleSheet);
     setInterval(checkForMutations, 500);
 }
