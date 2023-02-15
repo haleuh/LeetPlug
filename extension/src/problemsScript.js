@@ -367,6 +367,7 @@ function checkForMutations () {
                     if ($(resetCodeButtonWarn).length) {
                         // trigger the reset of the code
                         $(resetCodeButtonWarn).click();
+                        setTimeout(function () {}, 500)
                         prepareSession();
                         startTimer();
                         sendProblemEvent(currentProblem, "start", session);
@@ -380,6 +381,7 @@ function checkForMutations () {
                     if ($(resetCodeButtonWarn).length) {
                         // trigger the reset of the code
                         $(resetCodeButtonWarn).click();
+                        setTimeout(function () {}, 500)
                         prepareSession();
                         hideTimer();
                         sendProblemEvent(currentProblem, "start", session);
@@ -441,5 +443,5 @@ function onLoadPage (evt) {
     styleSheet.type = "text/css";
     styleSheet.innerText = getThemeStyle();
     document.head.appendChild(styleSheet);
-    setInterval(checkForMutations, 500);
+    setInterval(checkForMutations, 1000);
 }
