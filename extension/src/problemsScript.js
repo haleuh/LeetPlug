@@ -5,7 +5,8 @@ window.addEventListener("load", onLoadPage, false);
 const darkThemeElement = "[data-theme='dark']"
 const problemDescriptionTabElement = "[class='flex flex-row space-x-2 overflow-x-auto overflow-y-hidden']";  // Description tab header
 const problemDescriptionElement = "[class='flex h-full w-full flex-1 flex-col']";  // Description content
-const submissionResultElement = "div.flex.flex-col.gap-6.px-5.pt-6 > div > div.flex.items-center.gap-4 > div > span";  // Result element
+const submissionAcceptedResultElement = "div.flex.flex-col.gap-6.px-5.pt-6 > div > div.flex.items-center.gap-4 > div > span:contains('Accepted')";  // Accepted result element
+const submissionWrongResultElement = "div.flex.items-center > div:contains('Wrong Answer')";  // Wrong result element
 const codeAreaElement = "[class='h-full flex-col ssg__qd-splitter-secondary-w']";   // Code area
 const codingPanelElement = "[class='relative flex h-full flex-col']"; // Code content
 const bottomButtonElement = "[class='ml-auto flex items-center space-x-4']";  // Run button
@@ -306,17 +307,15 @@ function getProblemDifficulty() {
 
 // This function can identify if the submission was completed and stop the polling cycle
 function checkForSubmitComplete () {
-    if ($(submissionResultElement).length) {
-        if ($(submissionResultElement).text() === "Accepted") {
-            clearInterval(jsSubmissionChecktimer);
-            console.log("SUCCESS");
-            stopTimer();
-            sendProblemEvent(currentProblem, "result_ok", session);
-        } else {
+    if ($(submissionAcceptedResultElement).length) {
+        clearInterval(jsSubmissionChecktimer);
+        console.log("SUCCESS");
+        stopTimer();
+        sendProblemEvent(currentProblem, "result_ok", session);
+    } else if ($(submissionWrongResultElement).length) {
             clearInterval(jsSubmissionChecktimer);
             console.log("ERROR");
             sendProblemEvent(currentProblem, "result_ko", session);
-        }
     }
 }
 

@@ -90,3 +90,6 @@ celerybeat-schedule
 # virtualenv
 venv/
 ENV/
+/node_modules/
+/package.json
+/package-lock.json
